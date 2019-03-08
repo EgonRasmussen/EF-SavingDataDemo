@@ -13,11 +13,12 @@ namespace SavingData
     {
         static void Main(string[] args)
         {
-            SavingDataDisconnected();
+            InitializeDatabase();
 
+            //SavingDataDisconnected();
             //UpdateDisconnected();
             //UpdateGraphDisconnected();
-            //AttachGraphDisconnected();
+            AttachGraphDisconnected();
         }
 
 
@@ -34,6 +35,8 @@ namespace SavingData
             {
                 var blogOld = contextSecond.Blogs.First();  // Reload entity
                 blogOld.Url = blog.Url;
+
+                DisplayStates(contextSecond.ChangeTracker.Entries());
                 contextSecond.SaveChanges();
             }
         }
@@ -86,14 +89,24 @@ namespace SavingData
                 //contextSecond.Add(new PostTag { PostId = 1, TagId = "Living" });   // Adder nye entiteter
 
                 contextSecond.Attach(blog);
-                contextSecond.Entry(blog).State = EntityState.Modified;  // Nu Updates kun Blog-entiteten
-                // contextSecond.Entry(blog).Property(p => p.Url).IsModified = true;
+                contextSecond.Entry(blog).State = EntityState.Modified;                 // Nu Updates kun Blog-entiteten
+                // contextSecond.Entry(blog).Property(p => p.Url).IsModified = true;    // Nu Updates kun Url- property
 
                 DisplayStates(contextSecond.ChangeTracker.Entries());
                 contextSecond.SaveChanges();
             }
         }
 
+        #region INITIALIZE DATABASE
+        private static void InitializeDatabase()
+        {
+            using (var context = new BloggingContext())
+            {
+                context.Database.EnsureDeleted();
+                context.Database.EnsureCreated();
+            }
+        }
+        #endregion
 
         #region DISPLAY STATES
         private static void DisplayStates(IEnumerable<EntityEntry> entries)
