@@ -1,7 +1,23 @@
-﻿// https://docs.microsoft.com/en-us/ef/core/saving/related-data
+﻿// https://docs.microsoft.com/en-us/ef/core/saving/cascade-delete
+
+// Demo foregår nemmest ved at lade BlogId være oprettet som Nullable (int?) og styre DeleteBehavior via Fluent API i Contexten.
+// Log-udskriften under DB-oprettelsen afslører hvilken Constraint relationen indeholder.
+
+// int  BlogId = required: DeleteBehavior.Cascade (Default) + .Include(b => b.Posts) -> Blog and Posts in Memory are all deleted
+// int  BlogId = required: DeleteBehavior.Cascade (Default) - .Include(b => b.Posts) -> Blog in Memory and Posts in DB and are all deleted (Cascading Delete implemented)
+
+// int? BlogId = optional: DeleteBehavior.ClientSetNull (Default) + .Include(b => b.Posts) -> Foreign key properties are set to null
+// int? BlogId = optional: DeleteBehavior.ClientSetNull (Default) - .Include(b => b.Posts) -> Exception because BlogId is not set to NULL in DB (NO ACTION)
+
+// int? BlogId = optional: DeleteBehavior.SetNull + .Include(b => b.Posts) -> Foreign key properties are set to null
+// int? BlogId = optional: DeleteBehavior.SetNull - .Include(b => b.Posts) -> Foreign key properties are set to null
+
+// int  BlogId = required: DeleteBehavior.Restrict -> Nothing is deleted
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using SavingData.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,70 +27,77 @@ namespace SavingData
     {
         static void Main(string[] args)
         {
-            AddingGraphNewEntities();
-            //AddingRelatedEntity();
-            //ChangingRelationships();
-            //RemovingRelationships();
+            InitializeDatabase();
+            DeleteBlog();
         }
 
-
-        private static void AddingGraphNewEntities()
-        {
-            using (var context = new BloggingContext())
-            {
-                var blog = new Blog
-                {
-                    Url = "http://blogs.msdn.com/dotnet",
-                    Posts = new List<Post>
-                    {
-                        new Post { Title = "Intro to C#" },
-                        new Post { Title = "Intro to VB.NET" },
-                        new Post { Title = "Intro to F#" }
-                    }
-                };
-
-                context.Blogs.Add(blog);
-                context.SaveChanges();
-            }
-        }
-
-        private static void AddingRelatedEntity()
+        private static void DeleteBlog()
         {
             using (var context = new BloggingContext())
             {
                 var blog = context.Blogs
-                    .Include(b => b.Posts)            // Mangler denne linje, kastes en "Object reference not set to an instance of an object" exception. 
+                    .Include(b => b.Posts)
                     .First();
-                var post = new Post { Title = "Intro to EF Core" };
 
-                blog.Posts.Add(post);
-                //blog.Posts = new List<Post> { post };   // Alternativ til at indlæse relaterede Blogs
-                context.SaveChanges();
+                context.Remove(blog);
+
+                try
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Saving changes:");
+
+                    DisplayStates(context.ChangeTracker.Entries());
+                    context.SaveChanges();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"SaveChanges threw {e.GetType().Name}: {(e is DbUpdateException ? e.InnerException.Message : e.Message)}");
+                }
             }
         }
 
-        private static void ChangingRelationships()
+        #region INITIALIZE DATABASE
+        private static void InitializeDatabase()
         {
             using (var context = new BloggingContext())
             {
-                var blog = new Blog { Url = "http://blogs.msdn.com/visualstudio" };
-                var post = context.Posts.First();
+                context.Database.EnsureDeleted();
+                context.Database.EnsureCreated();
 
-                post.Blog = blog;
+                context.Blogs.Add(new Blog
+                {
+                    Url = "http://sample.com",
+                    Posts = new List<Post>
+                    {
+                        new Post {Title = "Saving Data with EF"},
+                        new Post {Title = "Cascade Delete with EF"}
+                    }
+                });
+
                 context.SaveChanges();
             }
         }
+        #endregion
 
-        private static void RemovingRelationships()
+        #region DISPLAY STATES
+        private static void DisplayStates(IEnumerable<EntityEntry> entries)
         {
-            using (var context = new BloggingContext())
+            Console.WriteLine("\n-------------- EntityStates ----------------");
+            foreach (var entry in entries)
             {
-                var blog = context.Blogs.Include(b => b.Posts).First();
-                var post = blog.Posts.First();
-
-                blog.Posts.Remove(post);
-                context.SaveChanges();
+                Console.WriteLine("Entity: {0, -15} State: {1}", entry.Entity.GetType().Name, entry.State.ToString());
+                if (entry.State == EntityState.Modified)
+                {
+                    foreach (var prop in entry.Members)
+                    {
+                        Console.WriteLine("\tProperty: {0, -15} IsModified: {1}", prop.Metadata.Name, prop.IsModified);
+                    }
+                }
             }
+            Console.WriteLine("--------------------------------------------\n");
+            //  DisplayStates(context.ChangeTracker.Entries());
         }
+        #endregion
     }
 }

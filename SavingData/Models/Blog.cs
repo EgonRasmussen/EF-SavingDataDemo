@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace SavingData.Models
 {
@@ -10,11 +6,8 @@ namespace SavingData.Models
     {
         public int BlogId { get; set; }
         public string Url { get; set; }
-        public int? Rating { get; set; }
 
 
-        public int? OwnerId { get; set; }
         public List<Post> Posts { get; set; }
-        public Person Owner { get; set; }
     }
 }
