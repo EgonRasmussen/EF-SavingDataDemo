@@ -13,7 +13,7 @@ namespace SavingData
     {
         static void Main(string[] args)
         {
-            //SavingDataDisconnected();
+            SavingDataDisconnected();
 
             //UpdateDisconnected();
             //UpdateGraphDisconnected();
@@ -24,16 +24,17 @@ namespace SavingData
 
         private static void SavingDataDisconnected()
         {
+            Blog blog;
             using (var contextFirst = new BloggingContext())
             {
-                var blogNew = contextFirst.Blogs.First();
-                blogNew.Url = "http://sample.com/disconnectedUdenUpdate";
-                using (var contextSecond = new BloggingContext())
-                {
-                    var blogOld = contextSecond.Blogs.First();
-                    blogOld.Url = blogNew.Url;
-                    contextSecond.SaveChanges();
-                }
+                blog = contextFirst.Blogs.First();
+                blog.Url = "http://sample.com/disconnectedUpdate";       
+            }
+            using (var contextSecond = new BloggingContext())
+            {
+                var blogOld = contextSecond.Blogs.First();  // Reload entity
+                blogOld.Url = blog.Url;
+                contextSecond.SaveChanges();
             }
         }
 
