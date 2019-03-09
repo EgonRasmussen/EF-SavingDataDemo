@@ -15,10 +15,10 @@ namespace SavingData
         {
             InitializeDatabase();
 
-            //SavingDataDisconnected();
+            SavingDataDisconnected();
             //UpdateDisconnected();
             //UpdateGraphDisconnected();
-            AttachGraphDisconnected();
+            //AttachGraphDisconnected();
         }
 
 
