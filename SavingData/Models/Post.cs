@@ -9,7 +9,7 @@ namespace SavingData.Models
         public string Content { get; set; }
         public int Rating { get; set; }
 
-        public int BlogId { get; set; }
+        public int BlogId { get; set; }        // FK
         public int? AuthorId { get; set; }
         public Blog Blog { get; set; }
         public Person Author { get; set; }

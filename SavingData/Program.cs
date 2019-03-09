@@ -1,8 +1,34 @@
-﻿// https://docs.microsoft.com/en-us/ef/core/saving/related-data
+﻿// https://docs.microsoft.com/en-us/ef/core/saving/cascade-delete
+
+// Begynd med at identificere hvilken DeleteBehavior der bliver sat på de forskellige relationer.
+// Derefter kan man køre programmet og breake efter at databasen er oprettet. I log-udskriften kan DeleteBehavior kontrolleres.
+// I dette tilfælde slettes Blog1, de relaterede Post1, Post2 og Post3, samt de relaterede PostTag1, PostTag2, PostTag3 og PostTag4.
+
+// Dernæst kan man spørge: hvor stor en del af graphen er det nødvendigt at indlæse, hvis man vil slette Blog1? Kun Blog1, fordi databasen selv laver Cascaded Delete
+//      Test det ved at udkommentere alle Includes. Bemærk at EF Core kun sletter Blog1, resten ordner DB selv. Kontrollér det i SSMS.
+
+
+// Nu ændres FK til Nullable: Post(BlogId) og PostTag(PostId). Lav ny migration.
+// Slet Blog1 med fuld graph indlæst.
+// Bemærk at relationerne i DB nu sættes til NO ACTION og at FK sættes til NULL
+// Når Blog1 slettes, medfører det 3 * UPDATE med NULL af FK hos Posts. Bemærk at PostTag ikke berøres!
+
+// Nu indlæses graphen ikke (udkommenter Include). Dette medfører en SQL Exception (fordi Blog1 ikke må slettes uden at FK i Post bliver påvirket).
+
+
+// int  BlogId = required: DeleteBehavior.Cascade (Default) + .Include(b => b.Posts) -> Blog and Posts in Memory are all deleted
+// int  BlogId = required: DeleteBehavior.Cascade (Default) - .Include(b => b.Posts) -> Blog in Memory and Posts in DB and are all deleted (Cascading Delete implemented)
+
+// int? BlogId = optional: DeleteBehavior.ClientSetNull (Default) + .Include(b => b.Posts) -> Foreign key properties are set to null
+// int? BlogId = optional: DeleteBehavior.ClientSetNull (Default) - .Include(b => b.Posts) -> Exception because BlogId is not set to NULL in DB (NO ACTION)
+
+// int? BlogId = optional: DeleteBehavior.SetNull + .Include(b => b.Posts) -> Foreign key properties are set to null
+// int? BlogId = optional: DeleteBehavior.SetNull - .Include(b => b.Posts) -> Foreign key properties are set to null
+
+// int  BlogId = required: DeleteBehavior.Restrict -> Nothing is deleted
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using SavingData.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,86 +40,35 @@ namespace SavingData
         static void Main(string[] args)
         {
             InitializeDatabase();
-
-            //SavingDataDisconnected();
-            //UpdateDisconnected();
-            //UpdateGraphDisconnected();
-            AttachGraphDisconnected();
+            DeleteBlog();
         }
 
-
-
-        private static void SavingDataDisconnected()
+        private static void DeleteBlog()
         {
-            Blog blog;
-            using (var contextFirst = new BloggingContext())
+            using (var context = new BloggingContext())
             {
-                blog = contextFirst.Blogs.First();
-                blog.Url = "http://sample.com/disconnectedUpdate";       
-            }
-            using (var contextSecond = new BloggingContext())
-            {
-                var blogOld = contextSecond.Blogs.First();  // Reload entity
-                blogOld.Url = blog.Url;
+                var blog = context.Blogs
+                    .Include(b => b.Posts)
+                        .ThenInclude(p => p.Tags)
+                    .Include(p => p.Owner)
+                        .ThenInclude(p => p.Photo)
+                    .First();
 
-                DisplayStates(contextSecond.ChangeTracker.Entries());
-                contextSecond.SaveChanges();
-            }
-        }
+                context.Remove(blog);
 
-        private static void UpdateDisconnected()
-        {
-            Blog blog;
-            using (var contextFirst = new BloggingContext())
-            {
-                blog = contextFirst.Blogs.First();
-                blog.Url = "http://sample.com/disconnectedUdenUpdate";
-            }
-            using (var contextSecond = new BloggingContext())
-            {
-                contextSecond.Update(blog);
-                DisplayStates(contextSecond.ChangeTracker.Entries());   // Alle properties for Blog Updates!
-                contextSecond.SaveChanges();
-            }
-        }
+                try
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Saving changes:");
 
-        private static void UpdateGraphDisconnected()
-        {
-            Blog blog;
-            using (var contextFirst = new BloggingContext())
-            {
-                blog = contextFirst.Blogs.Include(p => p.Posts).ThenInclude(pt => pt.Tags).Include(p => p.Owner).ThenInclude(pp => pp.Photo).First();
-                blog.Url = "http://sample.com/disconnectedUdenUpdate";
-
-            }
-            using (var contextSecond = new BloggingContext())
-            {
-                contextSecond.Update(blog);
-                DisplayStates(contextSecond.ChangeTracker.Entries()); // Ialt 10 komplette SQL-Updates!
-                contextSecond.SaveChanges();
-            }
-        }
-
-        private static void AttachGraphDisconnected()
-        {
-            Blog blog;
-            // Når den komplette graph medtages, resulterer en enkelt update nu kun i en eneste Update i DB!
-            using (var contextFirst = new BloggingContext())
-            {
-                blog = contextFirst.Blogs.Include(p => p.Posts).ThenInclude(pt => pt.Tags).Include(p => p.Owner).ThenInclude(pp => pp.Photo).First();
-
-                blog.Url = "http://sample.com/disconnectedUdenUpdate";
-            }
-            using (var contextSecond = new BloggingContext())
-            {
-                //contextSecond.Add(new PostTag { PostId = 1, TagId = "Living" });   // Adder nye entiteter
-
-                contextSecond.Attach(blog);
-                contextSecond.Entry(blog).State = EntityState.Modified;                 // Nu Updates kun Blog-entiteten
-                // contextSecond.Entry(blog).Property(p => p.Url).IsModified = true;    // Nu Updates kun Url- property
-
-                DisplayStates(contextSecond.ChangeTracker.Entries());
-                contextSecond.SaveChanges();
+                    DisplayStates(context.ChangeTracker.Entries());
+                    context.SaveChanges();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"SaveChanges threw {e.GetType().Name}: {(e is DbUpdateException ? e.InnerException.Message : e.Message)}");
+                }
             }
         }
 
@@ -124,6 +99,7 @@ namespace SavingData
                 }
             }
             Console.WriteLine("--------------------------------------------\n");
+            //  DisplayStates(context.ChangeTracker.Entries());
         }
         #endregion
     }

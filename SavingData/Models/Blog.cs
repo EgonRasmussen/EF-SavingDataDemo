@@ -13,7 +13,7 @@ namespace SavingData.Models
         public int? Rating { get; set; }
 
 
-        public int? OwnerId { get; set; }
+        public int? OwnerId { get; set; }   // FK
         public List<Post> Posts { get; set; }
         public Person Owner { get; set; }
     }
