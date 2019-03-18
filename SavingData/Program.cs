@@ -1,6 +1,7 @@
 ﻿// https://docs.microsoft.com/en-us/ef/core/saving/basic
 
 using SavingData.Models;
+using System;
 using System.Linq;
 
 namespace SavingData
@@ -9,6 +10,8 @@ namespace SavingData
     {
         static void Main(string[] args)
         {
+            InitializeDb();
+
             AddingData();
             //UpdatingData();
             //DeletingData();
@@ -62,6 +65,16 @@ namespace SavingData
                 context.Blogs.Remove(lastBlog);
 
                 context.SaveChanges();
+            }
+        }
+
+        private static void InitializeDb()
+        {
+            using (var context = new BloggingContext())
+            {
+                context.Database.EnsureDeleted();
+                context.Database.EnsureCreated();
+                Console.WriteLine("Database recreated");
             }
         }
     }
