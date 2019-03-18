@@ -27,8 +27,8 @@ namespace SavingData
     {
         static void Main(string[] args)
         {
-            InitializeDatabase();
-            DeleteBlog();
+            InitializeDb();
+            //DeleteBlog();
         }
 
         private static void DeleteBlog()
@@ -58,7 +58,7 @@ namespace SavingData
         }
 
         #region INITIALIZE DATABASE
-        private static void InitializeDatabase()
+        private static void InitializeDb()
         {
             using (var context = new BloggingContext())
             {
