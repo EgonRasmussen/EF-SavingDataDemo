@@ -1,4 +1,4 @@
-﻿// https://docs.microsoft.com/en-us/ef/core/saving/related-data
+﻿// Julie Lerman: Mapping the Entities (Pluralsight video)
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -15,87 +15,60 @@ namespace SavingData
         {
             InitializeDatabase();
 
-            SavingDataDisconnected();
-            //UpdateDisconnected();
-            //UpdateGraphDisconnected();
-            //AttachGraphDisconnected();
+            //InsertInManyToMany();
+            //InsertInManyToManyByTrackedPost();
+            InsertInManyToManyByNonTrackedPost();
+
         }
 
 
 
-        private static void SavingDataDisconnected()
+        private static void InsertInManyToMany()
         {
-            Blog blog;
-            using (var contextFirst = new BloggingContext())
+            using (var context = new BloggingContext())
             {
-                blog = contextFirst.Blogs.First();
-                blog.Url = "http://sample.com/disconnectedUpdate";       
-            }
-            using (var contextSecond = new BloggingContext())
-            {
-                var blogOld = contextSecond.Blogs.First();  // Reload entity
-                blogOld.Url = blog.Url;
+                PostTag postTag = new PostTag { PostId = 1, TagId = "Living" };
+                // context.PostTags.Add(postTag);    Der er ikke defineret en DbSet<PostTag>, så der indsættes direkte i DbContexten:
+                context.Add(postTag);
 
-                DisplayStates(contextSecond.ChangeTracker.Entries());
-                contextSecond.SaveChanges();
+                DisplayStates(context.ChangeTracker.Entries());
+                context.SaveChanges();
             }
         }
 
-        private static void UpdateDisconnected()
+        private static void InsertInManyToManyByTrackedPost()
         {
-            Blog blog;
-            using (var contextFirst = new BloggingContext())
+            // Her indlæses Post1 først, derefter addes et nyt PostTag objekt med tilhørende nyt Tag.
+            using (var context = new BloggingContext())
             {
-                blog = contextFirst.Blogs.First();
-                blog.Url = "http://sample.com/disconnectedUdenUpdate";
-            }
-            using (var contextSecond = new BloggingContext())
-            {
-                contextSecond.Update(blog);
-                DisplayStates(contextSecond.ChangeTracker.Entries());   // Alle properties for Blog Updates!
-                contextSecond.SaveChanges();
+                Post post = context.Posts.Include(pt => pt.Tags).Where(p => p.PostId == 1).SingleOrDefault();
+                post.Tags.Add( new PostTag { TagId = "Living" } );
+
+                DisplayStates(context.ChangeTracker.Entries());  
+                context.SaveChanges();
             }
         }
 
-        private static void UpdateGraphDisconnected()
+        private static void InsertInManyToManyByNonTrackedPost()
         {
-            Blog blog;
+            // Fordi post-objektet er totalt ukendt for Contexten, skal det attaches - ellers vil der ikke ske en tilføjelse af PostTag-objektet!
+            Post post;
             using (var contextFirst = new BloggingContext())
             {
-                blog = contextFirst.Blogs.Include(p => p.Posts).ThenInclude(pt => pt.Tags).Include(p => p.Owner).ThenInclude(pp => pp.Photo).First();
-                blog.Url = "http://sample.com/disconnectedUdenUpdate";
+                post = contextFirst.Posts.Find(1);
 
             }
             using (var contextSecond = new BloggingContext())
             {
-                contextSecond.Update(blog);
-                DisplayStates(contextSecond.ChangeTracker.Entries()); // Ialt 10 komplette SQL-Updates!
+                post.Tags = new List<PostTag> { new PostTag { TagId = "Living" } };
+
+                contextSecond.Posts.Attach(post);   // Prøv at udkommentere denne linje!
+                DisplayStates(contextSecond.ChangeTracker.Entries()); 
                 contextSecond.SaveChanges();
             }
         }
 
-        private static void AttachGraphDisconnected()
-        {
-            Blog blog;
-            // Når den komplette graph medtages, resulterer en enkelt update nu kun i en eneste Update i DB!
-            using (var contextFirst = new BloggingContext())
-            {
-                blog = contextFirst.Blogs.Include(p => p.Posts).ThenInclude(pt => pt.Tags).Include(p => p.Owner).ThenInclude(pp => pp.Photo).First();
-
-                blog.Url = "http://sample.com/disconnectedUdenUpdate";
-            }
-            using (var contextSecond = new BloggingContext())
-            {
-                //contextSecond.Add(new PostTag { PostId = 1, TagId = "Living" });   // Adder nye entiteter
-
-                contextSecond.Attach(blog);
-                contextSecond.Entry(blog).State = EntityState.Modified;                 // Nu Updates kun Blog-entiteten
-                // contextSecond.Entry(blog).Property(p => p.Url).IsModified = true;    // Nu Updates kun Url- property
-
-                DisplayStates(contextSecond.ChangeTracker.Entries());
-                contextSecond.SaveChanges();
-            }
-        }
+        
 
         #region INITIALIZE DATABASE
         private static void InitializeDatabase()
