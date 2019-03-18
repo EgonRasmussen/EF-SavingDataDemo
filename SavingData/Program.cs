@@ -2,6 +2,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using SavingData.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,6 +12,8 @@ namespace SavingData
     {
         static void Main(string[] args)
         {
+            InitializeDb();
+
             AddingGraphNewEntities();
             //AddingRelatedEntity();
             //ChangingRelationships();
@@ -74,6 +77,16 @@ namespace SavingData
 
                 blog.Posts.Remove(post);
                 context.SaveChanges();
+            }
+        }
+
+        private static void InitializeDb()
+        {
+            using (var context = new BloggingContext())
+            {
+                context.Database.EnsureDeleted();
+                context.Database.EnsureCreated();
+                Console.WriteLine("Database recreated");
             }
         }
     }
