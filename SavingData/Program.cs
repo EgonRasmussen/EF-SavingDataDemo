@@ -8,14 +8,14 @@
 //      Test det ved at udkommentere alle Includes. Bemærk at EF Core kun sletter Blog1, resten ordner DB selv. Kontrollér det i SSMS.
 
 
-// Nu ændres FK til Nullable: Post(BlogId) og PostTag(PostId). Lav ny migration.
+// Nu ændres FK til Nullable: Post(BlogId) og PostTag(PostId). 
 // Slet Blog1 med fuld graph indlæst.
 // Bemærk at relationerne i DB nu sættes til NO ACTION og at FK sættes til NULL
 // Når Blog1 slettes, medfører det 3 * UPDATE med NULL af FK hos Posts. Bemærk at PostTag ikke berøres!
 
 // Nu indlæses graphen ikke (udkommenter Include). Dette medfører en SQL Exception (fordi Blog1 ikke må slettes uden at FK i Post bliver påvirket).
 
-
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // int  BlogId = required: DeleteBehavior.Cascade (Default) + .Include(b => b.Posts) -> Blog and Posts in Memory are all deleted
 // int  BlogId = required: DeleteBehavior.Cascade (Default) - .Include(b => b.Posts) -> Blog in Memory and Posts in DB and are all deleted (Cascading Delete implemented)
 
