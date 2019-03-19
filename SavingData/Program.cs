@@ -1,5 +1,7 @@
 ﻿// https://docs.microsoft.com/en-us/ef/core/saving/related-data
 
+// Demonstreres i debug og med Blogs og Posts tabellerne åbne i SSOE.
+
 using Microsoft.EntityFrameworkCore;
 using SavingData.Models;
 using System;
@@ -15,9 +17,9 @@ namespace SavingData
             InitializeDb();
 
             AddingGraphNewEntities();
-            //AddingRelatedEntity();
-            //ChangingRelationships();
-            //RemovingRelationships();
+            AddingRelatedEntity();
+            ChangingRelationships();
+            RemovingRelationships();
         }
 
 
@@ -58,12 +60,13 @@ namespace SavingData
 
         private static void ChangingRelationships()
         {
+            
             using (var context = new BloggingContext())
             {
                 var blog = new Blog { Url = "http://blogs.msdn.com/visualstudio" };
-                var post = context.Posts.First();
+                var post = context.Posts.First();       // Den fremsøgte Post 1 relaterer til en tidligere oprettet Blog 1
 
-                post.Blog = blog;
+                post.Blog = blog;                       // Nu ændres tilhørsforholdet for Post 1, som nu relaterer til den nye Blog 2. FK i Post 1 ændres via navigation property
                 context.SaveChanges();
             }
         }
@@ -72,7 +75,9 @@ namespace SavingData
         {
             using (var context = new BloggingContext())
             {
-                var blog = context.Blogs.Include(b => b.Posts).First();
+                var blog = context.Blogs
+                    .OrderBy(b => b.BlogId)
+                    .Include(b => b.Posts).First();
                 var post = blog.Posts.First();
 
                 blog.Posts.Remove(post);
