@@ -1,18 +1,22 @@
 ﻿// https://docs.microsoft.com/en-us/ef/core/saving/cascade-delete
 
-// Demo foregår nemmest ved at lade BlogId være oprettet som Nullable (int?) og styre DeleteBehavior via Fluent API i Contexten.
+// Demo foregår nemmest ved at lade BlogId være oprettet som Nullable (int?) og styre om den er Required (.IsRequired(true)) samt DeleteBehavior via Fluent API i Contexten.
 // Log-udskriften under DB-oprettelsen afslører hvilken Constraint relationen indeholder.
+//  Sæt et breakpoint ved SaveChanges(). Via Locals-vinduet kan det konstateres at entiteterne bliver slettet i memory når SaveChanges() er kørt.
+//  Kontroller sletningen i databasen ved at hente data fra tabellerne med SSOE. 
 
+// Benyt følgende i context: .IsRequired(true).OnDelete(DeleteBehavior.Cascade);
 // int  BlogId = required: DeleteBehavior.Cascade (Default) + .Include(b => b.Posts) -> Blog and Posts in Memory are all deleted
 // int  BlogId = required: DeleteBehavior.Cascade (Default) - .Include(b => b.Posts) -> Blog in Memory and Posts in DB and are all deleted (Cascading Delete implemented)
 
+// Benyt følgende i context: .IsRequired(false).OnDelete(DeleteBehavior.ClientSetNull);
 // int? BlogId = optional: DeleteBehavior.ClientSetNull (Default) + .Include(b => b.Posts) -> Foreign key properties are set to null
 // int? BlogId = optional: DeleteBehavior.ClientSetNull (Default) - .Include(b => b.Posts) -> Exception because BlogId is not set to NULL in DB (NO ACTION)
 
-// int? BlogId = optional: DeleteBehavior.SetNull + .Include(b => b.Posts) -> Foreign key properties are set to null
-// int? BlogId = optional: DeleteBehavior.SetNull - .Include(b => b.Posts) -> Foreign key properties are set to null
+//      int? BlogId = optional: DeleteBehavior.SetNull + .Include(b => b.Posts) -> Foreign key properties are set to null
+//      int? BlogId = optional: DeleteBehavior.SetNull - .Include(b => b.Posts) -> Foreign key properties are set to null
 
-// int  BlogId = required: DeleteBehavior.Restrict -> Nothing is deleted
+//      int  BlogId = required: DeleteBehavior.Restrict -> Nothing is deleted
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -28,7 +32,7 @@ namespace SavingData
         static void Main(string[] args)
         {
             InitializeDb();
-            //DeleteBlog();
+            DeleteBlog();
         }
 
         private static void DeleteBlog()

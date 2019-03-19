@@ -25,8 +25,8 @@ namespace SavingData
             modelBuilder.Entity<Post>()
                 .HasOne(p => p.Blog)
                 .WithMany(b => b.Posts)
-                //.IsRequired()
-                .OnDelete(DeleteBehavior.SetNull);
+                .IsRequired(true)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
