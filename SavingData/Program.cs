@@ -17,9 +17,9 @@ namespace SavingData
         {
             InitializeDatabase();
 
-            //InsertInManyToMany();
+            InsertInManyToMany();
             //InsertInManyToManyByTrackedPost();
-            InsertInManyToManyByNonTrackedPost();
+            //InsertInManyToManyByNonTrackedPost();
 
         }
 
