@@ -15,17 +15,15 @@
 
 // 7. Til sidst undlades det at indlæses graphen (udkommenter Include). Dette medfører en SQL Exception (fordi Blog1 ikke må slettes uden at FK i Post bliver påvirket).
 
-// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// int  BlogId = required: DeleteBehavior.Cascade (Default) + .Include(b => b.Posts) -> Blog and Posts in Memory are all deleted
-// int  BlogId = required: DeleteBehavior.Cascade (Default) - .Include(b => b.Posts) -> Blog in Memory and Posts in DB and are all deleted (Cascading Delete implemented)
+// ------------------------Repeterende forklaring fra forrige demo: ----------------------------------------------------------------------------------------------------------
+// DeleteBehavior.Cascade (Default): Sæt FK Post.BlogId til int, altså Not Nullable. Relationen er Required!
+//  1. Med indlæsning af relaterede Posts, altså .Include(b => b.Posts) -> Relaterede Post-objekter deletes vha. SQL fordi EF kender til dem (tracked)
+//  2. Uden indlæsning af relaterede Posts, uden .Include(b => b.Posts) -> EF fjerner kun relaterede Post-objekter i memory, 
+//          men DB er oprettet med ON DELETE CASCADE på relationen og derfor sørger den selv for at slette Post-objekterne. Derfor kun DELETE af Blog i SQL!
 
-// int? BlogId = optional: DeleteBehavior.ClientSetNull (Default) + .Include(b => b.Posts) -> Foreign key properties are set to null
-// int? BlogId = optional: DeleteBehavior.ClientSetNull (Default) - .Include(b => b.Posts) -> Exception because BlogId is not set to NULL in DB (NO ACTION)
-
-// int? BlogId = optional: DeleteBehavior.SetNull + .Include(b => b.Posts) -> Foreign key properties are set to null
-// int? BlogId = optional: DeleteBehavior.SetNull - .Include(b => b.Posts) -> Foreign key properties are set to null
-
-// int  BlogId = required: DeleteBehavior.Restrict -> Nothing is deleted
+// DeleteBehavior.ClientSetNull (Default): Sæt FK Post.BlogId til int?, altså Nullable. Relationen er Optional!
+//  3. Med indlæsning af relaterede Posts, altså .Include(b => b.Posts) -> Foreign key properties sættes til NULL og kun Blog-objektet slettes vha. SQL
+//  4. Uden indlæsning af relaterede Posts, uden .Include(b => b.Posts) -> Exception fordi DB er oprettet med ON DELETE NO ACTION og dermed overtrædes REFERENCE CONSTRAINT
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
