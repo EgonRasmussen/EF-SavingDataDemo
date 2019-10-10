@@ -22,7 +22,7 @@ namespace SavingData
             RemovingRelationships();
         }
 
-
+        // https://docs.microsoft.com/da-dk/ef/core/saving/related-data#adding-a-graph-of-new-entities
         private static void AddingGraphNewEntities()
         {
             using (var context = new BloggingContext())
@@ -43,12 +43,13 @@ namespace SavingData
             }
         }
 
+        // https://docs.microsoft.com/da-dk/ef/core/saving/related-data#adding-a-related-entity
         private static void AddingRelatedEntity()
         {
             using (var context = new BloggingContext())
             {
                 var blog = context.Blogs
-                    .Include(b => b.Posts)            // Mangler denne linje, kastes en "Object reference not set to an instance of an object" exception. 
+                    .Include(b => b.Posts)            // Mangler denne linje, fejler den når vi når til Add(post) fordi der ikke findes en Posts collection. 
                     .First();
                 var post = new Post { Title = "Intro to EF Core" };
 
@@ -58,9 +59,9 @@ namespace SavingData
             }
         }
 
-        private static void ChangingRelationships()
-        {
-            
+        // https://docs.microsoft.com/da-dk/ef/core/saving/related-data#changing-relationships
+        private static void ChangingRelationships()   
+        {    
             using (var context = new BloggingContext())
             {
                 var blog = new Blog { Url = "http://blogs.msdn.com/visualstudio" };
@@ -71,6 +72,7 @@ namespace SavingData
             }
         }
 
+        // https://docs.microsoft.com/da-dk/ef/core/saving/related-data#removing-relationships
         private static void RemovingRelationships()
         {
             using (var context = new BloggingContext())
