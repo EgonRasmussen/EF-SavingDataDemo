@@ -6,7 +6,7 @@
         public string Title { get; set; }
         public string Content { get; set; }
 
-        public int? BlogId { get; set; }    // Default Nullable
+        public int BlogId { get; set; }    // FK, som styrer Delete behavior
         public Blog Blog { get; set; }
     }
 }
