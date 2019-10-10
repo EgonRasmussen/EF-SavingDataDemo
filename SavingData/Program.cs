@@ -1,19 +1,19 @@
 ﻿// https://docs.microsoft.com/en-us/ef/core/saving/cascade-delete
 
-// Begynd med at identificere hvilken DeleteBehavior der bliver sat på de forskellige relationer.
-// Derefter kan man køre programmet og breake efter at databasen er oprettet. I log-udskriften kan DeleteBehavior kontrolleres.
-// I dette tilfælde slettes Blog1, de relaterede Post1, Post2 og Post3, samt de relaterede PostTag1, PostTag2, PostTag3 og PostTag4.
+// 1. Begynd med at undersøge relationstyperne i ER-diagrammets i forhold til om de er OPTIONAL eller REQUIRED.
+// 2. Derefter kan man køre programmet og breake efter at databasen er oprettet. I log-udskriften kan DeleteBehavior kontrolleres.
+// 3. Skriv de forskellige Delete constraints ind i ER-diagrammet.
+// 4. Når Blog1 slettes vil dette trække de relaterede Post1, Post2 og Post3, samt de relaterede PostTag1, PostTag2, PostTag3 og PostTag4 med i faldet!.
 
-// Dernæst kan man spørge: hvor stor en del af graphen er det nødvendigt at indlæse, hvis man vil slette Blog1? Kun Blog1, fordi databasen selv laver Cascaded Delete
+// 5. Dernæst kan man spørge: hvor stor en del af graphen er det nødvendigt at indlæse, hvis man vil slette Blog1? Kun Blog1, fordi databasen selv laver Cascaded Delete
 //      Test det ved at udkommentere alle Includes. Bemærk at EF Core kun sletter Blog1, resten ordner DB selv. Kontrollér det i SSMS.
 
+// 6. Nu ændres følgende FK til Nullable: Post(BlogId) og PostTag(PostId). 
+//      Slet Blog1 med fuld graph indlæst.
+//      Bemærk at relationerne i DB nu sættes til NO ACTION og at FK sættes til NULL
+//      Når Blog1 slettes, medfører det 3 * UPDATE med NULL af FK hos Posts. Bemærk at PostTag ikke berøres!
 
-// Nu ændres FK til Nullable: Post(BlogId) og PostTag(PostId). 
-// Slet Blog1 med fuld graph indlæst.
-// Bemærk at relationerne i DB nu sættes til NO ACTION og at FK sættes til NULL
-// Når Blog1 slettes, medfører det 3 * UPDATE med NULL af FK hos Posts. Bemærk at PostTag ikke berøres!
-
-// Nu indlæses graphen ikke (udkommenter Include). Dette medfører en SQL Exception (fordi Blog1 ikke må slettes uden at FK i Post bliver påvirket).
+// 7. Til sidst undlades det at indlæses graphen (udkommenter Include). Dette medfører en SQL Exception (fordi Blog1 ikke må slettes uden at FK i Post bliver påvirket).
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // int  BlogId = required: DeleteBehavior.Cascade (Default) + .Include(b => b.Posts) -> Blog and Posts in Memory are all deleted
