@@ -54,7 +54,7 @@ namespace SavingData
                 var post = new Post { Title = "Intro to EF Core" };
 
                 blog.Posts.Add(post);
-                //blog.Posts = new List<Post> { post };   // Alternativ til at indlæse relaterede Blogs
+                //blog.Posts = new List<Post> { post };   // Alternativ til at indlæse relaterede Blogs. Eller lav initialiseringa af Blog.Posts i modellen
                 context.SaveChanges();
             }
         }
