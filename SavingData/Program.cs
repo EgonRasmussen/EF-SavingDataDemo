@@ -13,11 +13,11 @@ namespace SavingData
     {
         static void Main(string[] args)
         {
-            InitializeDatabase();
+            //InitializeDatabase();
 
-            SavingDataDisconnected();
+            //SavingDataDisconnected();
             //UpdateDisconnected();
-            //UpdateGraphDisconnected();
+            UpdateGraphDisconnected();
             //AttachGraphDisconnected();
         }
 
