@@ -56,16 +56,14 @@ namespace SavingData
 
                 try
                 {
-                    Console.WriteLine();
-                    Console.WriteLine("Saving changes:");
+                    Console.WriteLine("\nSaving changes:");
 
                     DisplayStates(context.ChangeTracker.Entries());
                     context.SaveChanges();
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine();
-                    Console.WriteLine($"SaveChanges threw {e.GetType().Name}: {(e is DbUpdateException ? e.InnerException.Message : e.Message)}");
+                    Console.WriteLine($"\nSaveChanges threw {e.GetType().Name}: {(e is DbUpdateException ? e.InnerException.Message : e.Message)}");
                 }
             }
         }
