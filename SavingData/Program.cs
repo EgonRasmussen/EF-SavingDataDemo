@@ -15,9 +15,9 @@ namespace SavingData
         {
             //InitializeDatabase();
 
-            //SavingDataDisconnected();
+            SavingDataDisconnected();
             //UpdateDisconnected();
-            UpdateGraphDisconnected();
+            //UpdateGraphDisconnected();
             //AttachGraphDisconnected();
         }
 
