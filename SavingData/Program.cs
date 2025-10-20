@@ -1,79 +1,90 @@
 ﻿// https://docs.microsoft.com/en-us/ef/core/saving/basic
 
+using Microsoft.EntityFrameworkCore;
 using SavingData.Models;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SavingData
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            InitializeDb();   // Køres kun første gang
+            await InitializeDb();   // Køres kun første gang
 
-            //AddingData();
-            //UpdatingData();
+            //await AddingData();
+            //await UpdatingData();
             //DeletingData();
-            //MultipleOperationsInASingleSaveChanges();
+            //await MultipleOperationsInASingleSaveChanges();
         }
 
-        private static void AddingData()
+        private static async Task AddingData()
         {
             using (var context = new BloggingContext())
             {
-                var blog = new Blog { Url = "http://sample.com" };
+                var blog = new Blog { Url = "http://example.com" };
                 context.Blogs.Add(blog);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
-        private static void UpdatingData()
+        private static async Task UpdatingData()
         {
             using (var context = new BloggingContext())
             {
-                var blog = context.Blogs.OrderBy(x => x.BlogId).First();
-                blog.Url = "http://sample.com/updated";
-                context.SaveChanges();
+                var blog = await context.Blogs.SingleAsync(b => b.Url == "http://example.com");
+                blog.Url = "http://example.com/blog";
+                await context.SaveChangesAsync();
             }
         }
 
-        private static void DeletingData()
+        private static async Task DeletingData()
         {
             using (var context = new BloggingContext())
             {
-                var blog = context.Blogs.OrderBy(x => x.BlogId).First();
+                var blog = await context.Blogs.SingleAsync(b => b.Url == "http://example.com/blog");
                 context.Blogs.Remove(blog);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
-        private static void MultipleOperationsInASingleSaveChanges()
+        private static async Task MultipleOperationsInASingleSaveChanges()
         {
+            using (var context = new BloggingContext())
+            {
+                await InitializeDb();
+                // seeding database
+                context.Blogs.Add(new Blog { Url = "http://example.com/blog" });
+                context.Blogs.Add(new Blog { Url = "http://example.com/another_blog" });
+                await context.SaveChangesAsync();
+            }
+
             using (var context = new BloggingContext())
             {
                 // add
-                context.Blogs.Add(new Blog { Url = "http://sample.com/blog_one" });
-                context.Blogs.Add(new Blog { Url = "http://sample.com/blog_two" });
+                context.Blogs.Add(new Blog { Url = "http://example.com/blog_one" });
+                context.Blogs.Add(new Blog { Url = "http://example.com/blog_two" });
 
                 // update
-                var firstBlog = context.Blogs.OrderBy(x => x.BlogId).First();
+                var firstBlog = await context.Blogs.FirstAsync();
                 firstBlog.Url = "";
 
                 // remove
-                var lastBlog = context.Blogs.OrderBy(x => x.BlogId).Last();
+                var lastBlog = await context.Blogs.OrderBy(e => e.BlogId).LastAsync();
                 context.Blogs.Remove(lastBlog);
 
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
-        private static void InitializeDb()
+        private static async Task InitializeDb()
         {
             using (var context = new BloggingContext())
             {
-                context.Database.EnsureDeleted();
-                context.Database.EnsureCreated();
+                await context.Database.EnsureDeletedAsync();
+                await context.Database.EnsureCreatedAsync();
                 Console.WriteLine("Database recreated");
             }
         }
