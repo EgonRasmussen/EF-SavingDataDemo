@@ -10,9 +10,9 @@ namespace SavingData
     {
         static void Main(string[] args)
         {
-            InitializeDb();
+            InitializeDb();   // Køres kun første gang
 
-            AddingData();
+            //AddingData();
             //UpdatingData();
             //DeletingData();
             //MultipleOperationsInASingleSaveChanges();
@@ -33,7 +33,7 @@ namespace SavingData
             using (var context = new BloggingContext())
             {
                 var blog = context.Blogs.OrderBy(x => x.BlogId).First();
-                blog.Url = "http://sample.com/blog";
+                blog.Url = "http://sample.com/updated";
                 context.SaveChanges();
             }
         }
