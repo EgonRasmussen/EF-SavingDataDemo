@@ -29,74 +29,73 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 
-namespace SavingData
+namespace SavingData;
+
+class Program
 {
-    class Program
+    static async Task Main()
     {
-        static void Main(string[] args)
-        {
-            InitializeDatabase();
-            DeleteBlog();
-        }
-
-        private static void DeleteBlog()
-        {
-            using (var context = new BloggingContext())
-            {
-                var blog = context.Blogs
-                    .Include(b => b.Posts)
-                        .ThenInclude(p => p.Tags)
-                    .Include(p => p.Owner)
-                        .ThenInclude(p => p.Photo)
-                    .First();
-
-                context.Remove(blog);
-
-                try
-                {
-                    Console.WriteLine("\nSaving changes:");
-
-                    DisplayStates(context.ChangeTracker.Entries());
-                    context.SaveChanges();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"\nSaveChanges threw {e.GetType().Name}: {(e is DbUpdateException ? e.InnerException.Message : e.Message)}");
-                }
-            }
-        }
-
-        #region INITIALIZE DATABASE
-        private static void InitializeDatabase()
-        {
-            using (var context = new BloggingContext())
-            {
-                context.Database.EnsureDeleted();
-                context.Database.EnsureCreated();
-            }
-        }
-        #endregion
-
-        #region DISPLAY STATES
-        private static void DisplayStates(IEnumerable<EntityEntry> entries)
-        {
-            Console.WriteLine("\n-------------- EntityStates ----------------");
-            foreach (var entry in entries)
-            {
-                Console.WriteLine("Entity: {0, -15} State: {1}", entry.Entity.GetType().Name, entry.State.ToString());
-                if (entry.State == EntityState.Modified)
-                {
-                    foreach (var prop in entry.Members)
-                    {
-                        Console.WriteLine("\tProperty: {0, -15} IsModified: {1}", prop.Metadata.Name, prop.IsModified);
-                    }
-                }
-            }
-            Console.WriteLine("--------------------------------------------\n");
-            //  DisplayStates(context.ChangeTracker.Entries());
-        }
-        #endregion
+        await InitializeDatabase();
+        await DeleteBlog();
     }
+
+    private static async Task DeleteBlog()
+    {
+        using (var context = new BloggingContext())
+        {
+            var blog = await context.Blogs
+                .Include(b => b.Posts)
+                    .ThenInclude(p => p.Tags)
+                .Include(p => p.Owner)
+                    .ThenInclude(p => p.Photo)
+                .FirstAsync();
+
+            context.Remove(blog);
+
+            try
+            {
+                Console.WriteLine("\nSaving changes:");
+
+                DisplayStates(context.ChangeTracker.Entries());
+                await context.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"\nSaveChanges threw {e.GetType().Name}: {(e is DbUpdateException ? e.InnerException.Message : e.Message)}");
+            }
+        }
+    }
+
+    #region INITIALIZE DATABASE
+    private static async Task InitializeDatabase()
+    {
+        using (var context = new BloggingContext())
+        {
+            await context.Database.EnsureDeletedAsync();
+            await context.Database.EnsureCreatedAsync();
+        }
+    }
+    #endregion
+
+    #region DISPLAY STATES
+    private static void DisplayStates(IEnumerable<EntityEntry> entries)
+    {
+        Console.WriteLine("\n-------------- EntityStates ----------------");
+        foreach (var entry in entries)
+        {
+            Console.WriteLine("Entity: {0, -15} State: {1}", entry.Entity.GetType().Name, entry.State.ToString());
+            if (entry.State == EntityState.Modified)
+            {
+                foreach (var prop in entry.Members)
+                {
+                    Console.WriteLine("\tProperty: {0, -15} IsModified: {1}", prop.Metadata.Name, prop.IsModified);
+                }
+            }
+        }
+        Console.WriteLine("--------------------------------------------\n");
+        //  DisplayStates(context.ChangeTracker.Entries());
+    }
+    #endregion
 }
