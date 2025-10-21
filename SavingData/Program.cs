@@ -24,85 +24,84 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using SavingData.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 
-namespace SavingData
+namespace SavingData;
+
+class Program
 {
-    class Program
+    static async Task Main()
     {
-        static void Main(string[] args)
-        {
-            InitializeDb();
-            DeleteBlog();
-        }
-
-        private static void DeleteBlog()
-        {
-            using (var context = new BloggingContext())
-            {
-                var blog = context.Blogs
-                    .Include(b => b.Posts)
-                    .First();
-
-                context.Remove(blog);
-
-                try
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("Saving changes:");
-
-                    DisplayStates(context.ChangeTracker.Entries());
-                    context.SaveChanges();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine($"SaveChanges threw {e.GetType().Name}: {(e is DbUpdateException ? e.InnerException.Message : e.Message)}");
-                }
-            }
-        }
-
-        #region INITIALIZE DATABASE
-        private static void InitializeDb()
-        {
-            using (var context = new BloggingContext())
-            {
-                context.Database.EnsureDeleted();
-                context.Database.EnsureCreated();
-
-                context.Blogs.Add(new Blog
-                {
-                    Url = "http://sample.com",
-                    Posts = new List<Post>
-                    {
-                        new Post {Title = "Saving Data with EF"},
-                        new Post {Title = "Cascade Delete with EF"}
-                    }
-                });
-
-                context.SaveChanges();
-            }
-        }
-        #endregion
-
-        #region DISPLAY STATES
-        private static void DisplayStates(IEnumerable<EntityEntry> entries)
-        {
-            Console.WriteLine("\n-------------- EntityStates ----------------");
-            foreach (var entry in entries)
-            {
-                Console.WriteLine("Entity: {0, -15} State: {1}", entry.Entity.GetType().Name, entry.State.ToString());
-                if (entry.State == EntityState.Modified)
-                {
-                    foreach (var prop in entry.Members)
-                    {
-                        Console.WriteLine("\tProperty: {0, -15} IsModified: {1}", prop.Metadata.Name, prop.IsModified);
-                    }
-                }
-            }
-            Console.WriteLine("--------------------------------------------\n");
-            //  DisplayStates(context.ChangeTracker.Entries());
-        }
-        #endregion
+        await InitializeDb();
+        await DeleteBlog();
     }
+
+    private static async Task DeleteBlog()
+    {
+        using (var context = new BloggingContext())
+        {
+            var blog = await context.Blogs
+                //.Include(b => b.Posts)    // Try with and without Include (Tracked related entities)
+                .FirstAsync();
+
+            context.Remove(blog);
+
+            try
+            {
+                Console.WriteLine();
+                Console.WriteLine("Saving changes:");
+
+                DisplayStates(context.ChangeTracker.Entries());
+                await context.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"SaveChanges threw {e.GetType().Name}: {(e is DbUpdateException ? e.InnerException.Message : e.Message)}");
+            }
+        }
+    }
+
+    #region INITIALIZE DATABASE
+    private static async Task InitializeDb()
+    {
+        using (var context = new BloggingContext())
+        {
+            await context.Database.EnsureDeletedAsync();
+            await context.Database.EnsureCreatedAsync();
+
+            context.Blogs.Add(new Blog
+            {
+                Url = "http://sample.com",
+                Posts = new List<Post>
+                {
+                    new Post {Title = "Saving Data with EF"},
+                    new Post {Title = "Cascade Delete with EF"}
+                }
+            });
+
+            await context.SaveChangesAsync();
+        }
+    }
+    #endregion
+
+    #region DISPLAY STATES
+    private static void DisplayStates(IEnumerable<EntityEntry> entries)
+    {
+        Console.WriteLine("\n-------------- EntityStates ----------------");
+        foreach (var entry in entries)
+        {
+            Console.WriteLine("Entity: {0, -15} State: {1}", entry.Entity.GetType().Name, entry.State.ToString());
+            if (entry.State == EntityState.Modified)
+            {
+                foreach (var prop in entry.Members)
+                {
+                    Console.WriteLine("\tProperty: {0, -15} IsModified: {1}", prop.Metadata.Name, prop.IsModified);
+                }
+            }
+        }
+        Console.WriteLine("--------------------------------------------\n");
+        //  DisplayStates(context.ChangeTracker.Entries());
+    }
+    #endregion
 }

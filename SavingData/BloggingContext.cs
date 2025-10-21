@@ -22,9 +22,10 @@ namespace SavingData
         {
             modelBuilder.Entity<Post>()
                 .HasOne(p => p.Blog)
-                .WithMany(b => b.Posts);
+                .WithMany(b => b.Posts)
                 //.IsRequired(true)
-                //.OnDelete(DeleteBehavior.Cascade);
+                //.OnDelete(DeleteBehavior.Cascade)
+                ;
         }
     }
 }
